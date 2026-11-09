@@ -1,14 +1,19 @@
-// /api/[...path].js, /api/agent/[...path].js 공용 프록시 로직.
+// api/proxy.js, api/agent-proxy.js 공용 프록시 로직.
+// vercel.json의 rewrites가 원래 경로를 ?path=... 쿼리로 넘겨주므로(캐치올 동적 파일명은
+// Vercel이 한 단계짜리 세그먼트로만 라우팅을 생성해 2단계 이상 경로가 404가 나는 문제가 있어
+// 고정 파일명 + 쿼리스트링 방식으로 우회함), 여기서 그 path로 사내 API 경로를 재구성한다.
 // Cloudflare Access 뒤의 사내 API(BACKEND_API_ORIGIN)로 요청을 그대로 넘기고,
 // 로그인 세션 쿠키(Set-Cookie 포함)를 그대로 왕복시킨다.
-export async function proxyRequest(req, res, backendPath) {
+export async function proxyRequest(req, res, prefix) {
 	const backendOrigin = process.env.BACKEND_API_ORIGIN;
 	if (!backendOrigin) {
 		res.status(500).json({ error: 'BACKEND_API_ORIGIN 환경변수가 설정되지 않았습니다.' });
 		return;
 	}
 
-	const target = backendOrigin.replace(/\/$/, '') + backendPath;
+	const { path = '', ...query } = req.query;
+	const qs = new URLSearchParams(query).toString();
+	const target = backendOrigin.replace(/\/$/, '') + prefix + '/' + path + (qs ? '?' + qs : '');
 
 	const headers = {};
 	if (req.headers.cookie) headers.cookie = req.headers.cookie;
@@ -40,11 +45,4 @@ export async function proxyRequest(req, res, backendPath) {
 
 	const body = await upstream.text();
 	res.send(body);
-}
-
-export function pathAndQuery(req, segments) {
-	const { path, ...query } = req.query;
-	void path; // path는 라우트 파라미터이므로 쿼리스트링 재구성에서 제외
-	const qs = new URLSearchParams(query).toString();
-	return '/' + segments.join('/') + (qs ? '?' + qs : '');
 }
