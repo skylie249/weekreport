@@ -19,6 +19,10 @@ export async function proxyRequest(req, res, prefix) {
 	if (req.headers.cookie) headers.cookie = req.headers.cookie;
 	if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
 	if (req.headers.authorization) headers.authorization = req.headers.authorization;
+	// 백엔드의 OriginCheckInterceptor(CSRF 방지, A1)가 POST/PUT/DELETE에서 Origin/Referer를
+	// 검사하므로, 서버 사이드 fetch가 자체적으로 붙이지 않는 이 헤더들을 그대로 전달해야 한다.
+	if (req.headers.origin) headers.origin = req.headers.origin;
+	if (req.headers.referer) headers.referer = req.headers.referer;
 	if (process.env.CF_ACCESS_CLIENT_ID) headers['CF-Access-Client-Id'] = process.env.CF_ACCESS_CLIENT_ID;
 	if (process.env.CF_ACCESS_CLIENT_SECRET) headers['CF-Access-Client-Secret'] = process.env.CF_ACCESS_CLIENT_SECRET;
 
