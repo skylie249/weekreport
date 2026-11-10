@@ -78,9 +78,15 @@ export const api = {
 	getReportView: (dtSeq) => request('/api/report/view?dt_seq=' + dtSeq),
 	getOnelineJobs: (dtSeq) => request('/api/report/oneline-jobs?dt_seq=' + dtSeq),
 
-	addOnelineLog: (dtSeq, jobId, logType, content) =>
-		agentRequest('/oneline', {
+	setWeeklyStatus: (dtSeq, statusButton, vacationDays) =>
+		agentRequest('/status', {
 			method: 'POST',
-			body: JSON.stringify({ dt_seq: dtSeq, job_id: jobId, log_type: logType, content })
-		})
+			body: JSON.stringify({ dt_seq: dtSeq, status_button: statusButton, vacation_days: vacationDays || 0 })
+		}),
+
+	getTodos: (dtSeq) => agentRequest('/todos?dt_seq=' + dtSeq),
+	addTodo: (dtSeq, jobId, text) =>
+		agentRequest('/todos', { method: 'POST', body: JSON.stringify({ dt_seq: dtSeq, job_id: jobId, text }) }),
+	updateTodo: (id, patch) => agentRequest('/todos/' + id, { method: 'PATCH', body: JSON.stringify(patch) }),
+	deleteTodo: (id) => agentRequest('/todos/' + id, { method: 'DELETE' })
 };

@@ -120,6 +120,16 @@ body {
 
 /* ---- 대시보드(F1) ---- */
 .dashboard { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+
+/* ---- 상태 버튼(G1 — 평소대로/업무변경/휴가 3개만) ---- */
+.status-buttons { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: #fafbfc; }
+.status-buttons h4 { font-size: 13px; color: var(--text-sub); margin: 0 0 10px; }
+.status-buttons-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.status-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 16px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; color: #26282b; min-width: 76px; }
+.status-btn:hover { border-color: var(--plan-color); }
+.status-btn.active { background: var(--plan-color); color: #fff; border-color: var(--plan-color); }
+.status-emoji { font-size: 20px; }
+
 .dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
 .dash-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: #fafbfc; }
 .dash-card-label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
@@ -138,16 +148,31 @@ body {
 	.dash-cards { grid-template-columns: 1fr; }
 }
 
-/* ---- 한 줄 입력(C2) ---- */
-.oneline-input { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: #fafbfc; }
-.oneline-input h4 { font-size: 13px; color: var(--text-sub); margin: 0 0 10px; }
+/* ---- 이번 주 할 일(G1) ---- */
+.todo-box { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: #fafbfc; }
+.todo-box h4 { font-size: 13px; color: var(--text-sub); margin: 0 0 10px; }
 
-.oneline-input-row { display: flex; gap: 8px; flex-wrap: wrap; }
-.oneline-input-row select { padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; }
-.oneline-input-row input[type=text] { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
-.oneline-input-row button { padding: 9px 16px; border: 1px solid var(--plan-color); background: #fff; color: var(--plan-color); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
-.oneline-input-row button:hover { background: var(--plan-color); color: #fff; }
-.oneline-input-row button:disabled { opacity: 0.5; cursor: default; }
+.todo-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.todo-add-row select { padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; }
+.todo-add-row input[type=text] { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; }
+.todo-add-row button { padding: 9px 16px; border: 1px solid var(--plan-color); background: #fff; color: var(--plan-color); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.todo-add-row button:hover { background: var(--plan-color); color: #fff; }
+.todo-add-row button:disabled { opacity: 0.5; cursor: default; }
+
+.todo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.todo-list li { margin: 0; }
+.todo-divider { text-align: center; color: var(--text-sub); font-size: 12px; padding: 6px 0; }
+.todo-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; background: #fff; flex-wrap: wrap; }
+.todo-status { flex-shrink: 0; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; background: #f2f4f7; font-size: 12px; font-weight: 600; cursor: pointer; }
+.todo-status:disabled { cursor: default; opacity: 0.7; }
+.todo-status-예정 { color: #666; }
+.todo-status-진행중 { color: var(--plan-color); border-color: var(--plan-color); }
+.todo-status-완료 { color: #2e9e4f; }
+.todo-text { flex: 1; min-width: 120px; }
+.todo-job { color: var(--text-sub); font-size: 12px; flex-shrink: 0; }
+.todo-help { flex-shrink: 0; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text-sub); padding: 4px 6px; border-radius: 6px; }
+.todo-help.active { color: #c0392b; background: #fdecea; }
+.todo-help:disabled { cursor: default; }
 
 /* ---- 초안 미리보기(전주 복사) ---- */
 .draft-preview { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px 90px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }

@@ -1,8 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { api } from './api.js';
 import DraftPreview from './DraftPreview.jsx';
 
 const STATE_LABELS = { EMPTY: '비어 있음', DRAFT: '작성 중', SUBMITTED: '제출 완료' };
+
+const STATUS_BUTTONS = [
+	{ key: '평소대로', emoji: '😊' },
+	{ key: '업무변경', emoji: '😮' },
+	{ key: '휴가', emoji: '🏖' }
+];
+
+const TODO_NEXT_STATUS = { 예정: '진행중', 진행중: '완료' };
 
 export default function Dashboard({ onSessionOut, onGoEdit }) {
 	const [data, setData] = useState(undefined);
@@ -10,11 +18,13 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 	const [msg, setMsg] = useState('');
 
 	const [agentMsg, setAgentMsg] = useState('');
+	const [selectedStatus, setSelectedStatus] = useState(null);
 	const [jobs, setJobs] = useState([]);
-	const [onelineJobId, setOnelineJobId] = useState('');
-	const [onelineType, setOnelineType] = useState('이슈');
-	const [onelineText, setOnelineText] = useState('');
-	const [onelineBusy, setOnelineBusy] = useState(false);
+
+	const [todos, setTodos] = useState([]);
+	const [newJobId, setNewJobId] = useState('');
+	const [newText, setNewText] = useState('');
+	const [todoBusy, setTodoBusy] = useState(false);
 
 	const load = useCallback(async () => {
 		const res = await api.getDashboard();
@@ -29,6 +39,22 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		load();
 	}, [load]);
 
+	const loadTodos = useCallback(
+		async (dtSeq) => {
+			const res = await api.getTodos(dtSeq);
+			if (res.__sessionout) {
+				onSessionOut();
+				return;
+			}
+			if (res.result === 'agent_disabled') {
+				setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
+				return;
+			}
+			setTodos(Array.isArray(res) ? res : []);
+		},
+		[onSessionOut]
+	);
+
 	useEffect(() => {
 		if (!data || !data.dt_seq) return;
 		api.getOnelineJobs(data.dt_seq).then((res) => {
@@ -38,8 +64,9 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 			}
 			const jobList = res.jobList || [];
 			setJobs(jobList);
-			setOnelineJobId(jobList.length > 0 ? String(jobList[0].job_id) : '');
+			setNewJobId((prev) => prev || (jobList.length > 0 ? String(jobList[0].job_id) : ''));
 		});
+		loadTodos(data.dt_seq);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data && data.dt_seq]);
 
@@ -77,12 +104,33 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		load();
 	};
 
-	const handleAddOneline = async () => {
-		const text = onelineText.trim();
-		if (!text || !onelineJobId || !data || !data.dt_seq) return;
-		setOnelineBusy(true);
+	const handleStatusClick = async (key) => {
+		if (!data || !data.dt_seq) return;
+		let vacationDays = 0;
+		if (key === '휴가') {
+			const input = window.prompt('휴가 일수를 입력하세요', '1');
+			if (input === null) return;
+			vacationDays = parseFloat(input) || 0;
+		}
+		const res = await api.setWeeklyStatus(data.dt_seq, key, vacationDays);
+		if (res.__sessionout) {
+			onSessionOut();
+			return;
+		}
+		if (res.result === 'agent_disabled') {
+			setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
+			return;
+		}
+		setSelectedStatus(key);
+		setAgentMsg('');
+	};
+
+	const handleAddTodo = async () => {
+		const text = newText.trim();
+		if (!text || !newJobId || !data || !data.dt_seq) return;
+		setTodoBusy(true);
 		try {
-			const res = await api.addOnelineLog(data.dt_seq, onelineJobId, onelineType, text);
+			const res = await api.addTodo(data.dt_seq, newJobId, text);
 			if (res.__sessionout) {
 				onSessionOut();
 				return;
@@ -91,11 +139,49 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 				setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
 				return;
 			}
-			setOnelineText('');
-			setAgentMsg('이슈·성과 기록이 저장되었습니다.');
+			setNewText('');
+			loadTodos(data.dt_seq);
 		} finally {
-			setOnelineBusy(false);
+			setTodoBusy(false);
 		}
+	};
+
+	const handleCycleStatus = async (todo) => {
+		const next = TODO_NEXT_STATUS[todo.status];
+		if (!next || !data) return;
+		const patch = { status: next };
+		if (next === '완료') patch.dt_seq = data.dt_seq;
+		const res = await api.updateTodo(todo.id, patch);
+		if (res.__sessionout) {
+			onSessionOut();
+			return;
+		}
+		if (res.result === 'agent_disabled') {
+			setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
+			return;
+		}
+		loadTodos(data.dt_seq);
+	};
+
+	const handleToggleHelp = async (todo) => {
+		if (todo.help_status === '확인함' || !data) return;
+		const next = todo.help_status === '없음' ? '요청' : '없음';
+		const res = await api.updateTodo(todo.id, { help_status: next });
+		if (res.__sessionout) {
+			onSessionOut();
+			return;
+		}
+		loadTodos(data.dt_seq);
+	};
+
+	const handleDeleteTodo = async (todo) => {
+		if (!data) return;
+		const res = await api.deleteTodo(todo.id);
+		if (res.__sessionout) {
+			onSessionOut();
+			return;
+		}
+		loadTodos(data.dt_seq);
 	};
 
 	if (data === undefined) {
@@ -110,19 +196,17 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		return <div className="empty-hint">{data.message || '등록된 주차 정보가 없습니다.'}</div>;
 	}
 
+	const carryoverStartIndex = todos.findIndex((t) => t.created_dt_seq < data.dt_seq);
+
 	return (
 		<div className="dashboard">
 			{msg && <div className="msg">{msg}</div>}
 			{agentMsg && <div className="msg">{agentMsg}</div>}
 
-			<div className="oneline-input">
-				<h4>이슈·성과 한 줄</h4>
-				<div className="oneline-input-row">
-					<select value={onelineType} onChange={(e) => setOnelineType(e.target.value)}>
-						<option value="이슈">이슈</option>
-						<option value="성과">성과</option>
-					</select>
-					<select value={onelineJobId} onChange={(e) => setOnelineJobId(e.target.value)}>
+			<div className="todo-box">
+				<h4>이번 주 할 일</h4>
+				<div className="todo-add-row">
+					<select value={newJobId} onChange={(e) => setNewJobId(e.target.value)}>
 						{jobs.length === 0 && <option value="">업무 없음</option>}
 						{jobs.map((j) => (
 							<option key={j.job_id} value={j.job_id}>{j.job_name}</option>
@@ -130,13 +214,68 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 					</select>
 					<input
 						type="text"
-						placeholder="한 줄로 적어주세요"
-						value={onelineText}
-						maxLength={500}
-						onChange={(e) => setOnelineText(e.target.value)}
-						onKeyDown={(e) => { if (e.key === 'Enter') handleAddOneline(); }}
+						placeholder="할 일을 한 줄로 적어주세요"
+						value={newText}
+						maxLength={200}
+						onChange={(e) => setNewText(e.target.value)}
+						onKeyDown={(e) => { if (e.key === 'Enter') handleAddTodo(); }}
 					/>
-					<button type="button" onClick={handleAddOneline} disabled={onelineBusy || !onelineJobId}>추가</button>
+					<button type="button" onClick={handleAddTodo} disabled={todoBusy || !newJobId}>추가</button>
+				</div>
+
+				{todos.length === 0 ? (
+					<div className="empty-hint">할 일이 아직 없습니다.</div>
+				) : (
+					<ul className="todo-list">
+						{todos.map((t, i) => (
+							<Fragment key={t.id}>
+								{i === carryoverStartIndex && carryoverStartIndex !== -1 && (
+									<li className="todo-divider">── 지난주에서 넘어온 일 {todos.length - carryoverStartIndex}건 ──</li>
+								)}
+								<li>
+									<div className="todo-row">
+										<button
+											type="button"
+											className={'todo-status todo-status-' + t.status}
+											onClick={() => handleCycleStatus(t)}
+											disabled={t.status === '완료'}
+										>
+											{t.status}{t.status !== '완료' ? ' ▼' : ''}
+										</button>
+										<span className="todo-text">{t.text}</span>
+										<span className="todo-job">{t.job_id}</span>
+										<button
+											type="button"
+											className={'todo-help' + (t.help_status !== '없음' ? ' active' : '')}
+											onClick={() => handleToggleHelp(t)}
+											disabled={t.help_status === '확인함'}
+											title="도움 필요"
+										>
+											🙋{t.help_status === '확인함' ? ' 팀장 확인함' : t.help_status === '요청' ? ' 도움 요청' : ''}
+										</button>
+										<button type="button" className="remove-btn" onClick={() => handleDeleteTodo(t)}>삭제 ✕</button>
+									</div>
+								</li>
+							</Fragment>
+						))}
+					</ul>
+				)}
+			</div>
+
+			<div className="status-buttons">
+				<h4>이번 주차 상태</h4>
+				<div className="status-buttons-row">
+					{STATUS_BUTTONS.map((b) => (
+						<button
+							key={b.key}
+							type="button"
+							className={'status-btn' + (selectedStatus === b.key ? ' active' : '')}
+							onClick={() => handleStatusClick(b.key)}
+						>
+							<span className="status-emoji">{b.emoji}</span>
+							<span className="status-label">{b.key === '업무변경' ? '업무가 바뀌었어요' : b.key === '휴가' ? '쉬었어요' : b.key}</span>
+						</button>
+					))}
 				</div>
 			</div>
 
