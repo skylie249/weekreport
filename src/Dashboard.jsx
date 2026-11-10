@@ -12,6 +12,14 @@ const STATUS_BUTTONS = [
 
 const TODO_NEXT_STATUS = { 예정: '진행중', 진행중: '완료' };
 
+const REPORT_SAVE_MESSAGES = {
+	SUCCESS: '작성 탭의 임시저장에 반영되었습니다.',
+	no_items: '반영할 지난주 내용이 없어 자동 저장은 건너뛰었습니다. 작성 탭에서 직접 입력해주세요.',
+	submitted_locked: '이번 주는 이미 제출되어 자동 저장이 적용되지 않았습니다. 수정하려면 작성 탭에서 직접 바꿔주세요.',
+	miniapp_unreachable: '자동 저장에 실패했습니다. 작성 탭에서 직접 확인해주세요.',
+	fail: '자동 저장에 실패했습니다. 작성 탭에서 직접 확인해주세요.',
+};
+
 export default function Dashboard({ onSessionOut, onGoEdit }) {
 	const [data, setData] = useState(undefined);
 	const [draft, setDraft] = useState(null);
@@ -122,7 +130,8 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 			return;
 		}
 		setSelectedStatus(key);
-		setAgentMsg('');
+		const saveResult = res.report_save && res.report_save.result;
+		setAgentMsg(REPORT_SAVE_MESSAGES[saveResult] || '');
 	};
 
 	const handleAddTodo = async () => {
