@@ -78,6 +78,11 @@ export const api = {
 	getReportView: (dtSeq) => request('/api/report/view?dt_seq=' + dtSeq),
 	getOnelineJobs: (dtSeq) => request('/api/report/oneline-jobs?dt_seq=' + dtSeq),
 
+	getProjectViewWeeks: () => request('/api/project-view/weeks'),
+	getProjectViewProjects: (dtSeq) => request('/api/project-view/projects?dt_seq=' + dtSeq),
+	getProjectView: (dtSeq, jobId) =>
+		request('/api/project-view?dt_seq=' + dtSeq + '&job_id=' + encodeURIComponent(jobId)),
+
 	setWeeklyStatus: (dtSeq, statusButton, vacationDays) =>
 		agentRequest('/status', {
 			method: 'POST',

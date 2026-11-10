@@ -4,16 +4,24 @@ import LoginScreen from './LoginScreen.jsx';
 import ReportScreen from './ReportScreen.jsx';
 import Dashboard from './Dashboard.jsx';
 import History from './History.jsx';
+import ProjectView from './ProjectView.jsx';
 
 const TABS = [
 	{ key: 'dashboard', label: '대시보드' },
 	{ key: 'history', label: '조회' },
+	{ key: 'project-view', label: '프로젝트별' },
 	{ key: 'edit', label: '작성' }
 ];
 
+// 프로젝트별 보기의 공유 링크(?job_id=...)로 바로 들어왔으면 그 탭을 기본으로 연다.
+function initialTab() {
+	const q = new URLSearchParams(window.location.search);
+	return q.get('job_id') ? 'project-view' : 'dashboard';
+}
+
 export default function App() {
 	const [member, setMember] = useState(undefined); // undefined=로딩중, null=미인증, object=인증됨
-	const [tab, setTab] = useState('dashboard');
+	const [tab, setTab] = useState(initialTab);
 	const [editDtSeq, setEditDtSeq] = useState(undefined);
 
 	const checkSession = useCallback(async () => {
@@ -82,6 +90,9 @@ export default function App() {
 				)}
 				{tab === 'history' && (
 					<History onSessionOut={() => setMember(null)} onGoEdit={goEdit} />
+				)}
+				{tab === 'project-view' && (
+					<ProjectView onSessionOut={() => setMember(null)} />
 				)}
 				{tab === 'edit' && (
 					<ReportScreen dtSeq={editDtSeq} onSessionOut={() => setMember(null)} />
