@@ -77,19 +77,6 @@ export const api = {
 	},
 	getReportView: (dtSeq) => request('/api/report/view?dt_seq=' + dtSeq),
 
-	getQuickLogs: (dtSeq) => request('/api/quick-logs' + (dtSeq ? '?dt_seq=' + dtSeq : '')),
-	addQuickLog: (text) => request('/api/quick-logs', { method: 'POST', body: JSON.stringify({ text }) }),
-	deleteQuickLog: (id) => request('/api/quick-logs/' + id, { method: 'DELETE' }),
-
-	setWeeklyStatus: (dtSeq, statusButton, vacationDays) =>
-		agentRequest('/status', {
-			method: 'POST',
-			body: JSON.stringify({ dt_seq: dtSeq, status_button: statusButton, vacation_days: vacationDays || 0 })
-		}),
-
-	getCarryover: () => agentRequest('/carryover'),
-	setCarryoverStatus: (id, status) =>
-		agentRequest('/oneline/' + id + '/status', { method: 'POST', body: JSON.stringify({ status }) }),
 	addOnelineLog: (dtSeq, jobId, logType, content) =>
 		agentRequest('/oneline', {
 			method: 'POST',

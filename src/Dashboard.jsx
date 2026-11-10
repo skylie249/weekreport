@@ -4,25 +4,12 @@ import DraftPreview from './DraftPreview.jsx';
 
 const STATE_LABELS = { EMPTY: '비어 있음', DRAFT: '작성 중', SUBMITTED: '제출 완료' };
 
-const STATUS_BUTTONS = [
-	{ key: '평소대로', emoji: '😊' },
-	{ key: '업무변경', emoji: '😮' },
-	{ key: '이슈', emoji: '😟' },
-	{ key: '성과', emoji: '🎉' },
-	{ key: '휴가', emoji: '🏖' }
-];
-
 export default function Dashboard({ onSessionOut, onGoEdit }) {
 	const [data, setData] = useState(undefined);
 	const [draft, setDraft] = useState(null);
 	const [msg, setMsg] = useState('');
 
-	const [logs, setLogs] = useState([]);
-	const [newText, setNewText] = useState('');
-
 	const [agentMsg, setAgentMsg] = useState('');
-	const [selectedStatus, setSelectedStatus] = useState(null);
-	const [carryover, setCarryover] = useState([]);
 	const [jobs, setJobs] = useState([]);
 	const [onelineJobId, setOnelineJobId] = useState('');
 	const [onelineType, setOnelineType] = useState('이슈');
@@ -42,32 +29,8 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		load();
 	}, [load]);
 
-	const loadLogs = useCallback(async (dtSeq) => {
-		const res = await api.getQuickLogs(dtSeq);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		setLogs(res.logs || []);
-	}, [onSessionOut]);
-
-	const loadCarryover = useCallback(async () => {
-		const res = await api.getCarryover();
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		if (!Array.isArray(res)) {
-			setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
-			setCarryover([]);
-			return;
-		}
-		setCarryover(res);
-	}, [onSessionOut]);
-
 	useEffect(() => {
 		if (!data || !data.dt_seq) return;
-		loadLogs(data.dt_seq);
 		api.getReport(data.dt_seq).then((res) => {
 			if (res.__sessionout) {
 				onSessionOut();
@@ -77,7 +40,6 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 			setJobs(jobList);
 			setOnelineJobId(jobList.length > 0 ? String(jobList[0].job_id) : '');
 		});
-		loadCarryover();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data && data.dt_seq]);
 
@@ -115,40 +77,6 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		load();
 	};
 
-	const handleStatusClick = async (key) => {
-		if (!data || !data.dt_seq) return;
-		let vacationDays = 0;
-		if (key === '휴가') {
-			const input = window.prompt('휴가 일수를 입력하세요', '1');
-			if (input === null) return;
-			vacationDays = parseFloat(input) || 0;
-		}
-		const res = await api.setWeeklyStatus(data.dt_seq, key, vacationDays);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		if (res.result === 'agent_disabled') {
-			setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
-			return;
-		}
-		setSelectedStatus(key);
-		setAgentMsg('');
-	};
-
-	const handleCarryoverAction = async (id, status) => {
-		const res = await api.setCarryoverStatus(id, status);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		if (res.result === 'agent_disabled') {
-			setAgentMsg(res.message || '에이전트 기능을 사용할 수 없습니다.');
-			return;
-		}
-		setCarryover((prev) => prev.filter((item) => item.id !== id));
-	};
-
 	const handleAddOneline = async () => {
 		const text = onelineText.trim();
 		if (!text || !onelineJobId || !data || !data.dt_seq) return;
@@ -170,31 +98,6 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		}
 	};
 
-	const handleAddLog = async () => {
-		const text = newText.trim();
-		if (!text) return;
-		const res = await api.addQuickLog(text);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		if (res.result !== 'SUCCESS') {
-			alert('메모 추가에 실패했습니다.');
-			return;
-		}
-		setNewText('');
-		loadLogs(data.dt_seq);
-	};
-
-	const handleDeleteLog = async (id) => {
-		const res = await api.deleteQuickLog(id);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		loadLogs(data.dt_seq);
-	};
-
 	if (data === undefined) {
 		return <div className="center-loading">불러오는 중...</div>;
 	}
@@ -211,44 +114,6 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		<div className="dashboard">
 			{msg && <div className="msg">{msg}</div>}
 			{agentMsg && <div className="msg">{agentMsg}</div>}
-
-			<div className="status-buttons">
-				<h4>이번 주차 상태</h4>
-				<div className="status-buttons-row">
-					{STATUS_BUTTONS.map((b) => (
-						<button
-							key={b.key}
-							type="button"
-							className={'status-btn' + (selectedStatus === b.key ? ' active' : '')}
-							onClick={() => handleStatusClick(b.key)}
-						>
-							<span className="status-emoji">{b.emoji}</span>
-							<span className="status-label">{b.key}</span>
-						</button>
-					))}
-				</div>
-			</div>
-
-			<div className="carryover">
-				<h4>지난주 예정 체크</h4>
-				{carryover.length === 0 ? (
-					<div className="empty-hint">지난주 예정 중 확인할 항목이 없습니다.</div>
-				) : (
-					<ul className="carryover-list">
-						{carryover.map((item) => (
-							<li key={item.id}>
-								<span className="carryover-content">{item.content}</span>
-								<div className="carryover-actions">
-									<button type="button" onClick={() => handleCarryoverAction(item.id, '완료')}>완료</button>
-									<button type="button" onClick={() => handleCarryoverAction(item.id, '진행중')}>진행중</button>
-									<button type="button" onClick={() => handleCarryoverAction(item.id, '연기')}>연기</button>
-									<button type="button" className="remove-btn" onClick={() => handleCarryoverAction(item.id, '삭제')}>삭제</button>
-								</div>
-							</li>
-						))}
-					</ul>
-				)}
-			</div>
 
 			<div className="oneline-input">
 				<h4>이슈·성과 한 줄</h4>
@@ -331,35 +196,6 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 					</ul>
 				</div>
 			)}
-
-			<div className="quick-log">
-				<h4>간편 메모</h4>
-				<div className="quick-log-input">
-					<input
-						type="text"
-						placeholder="오늘 한 일을 짧게 적어두세요 (끝에 3h, 1.5시간 처럼 쓰면 시간이 자동으로 기록됩니다)"
-						value={newText}
-						maxLength={500}
-						onChange={(e) => setNewText(e.target.value)}
-						onKeyDown={(e) => { if (e.key === 'Enter') handleAddLog(); }}
-					/>
-					<button type="button" onClick={handleAddLog}>추가</button>
-				</div>
-
-				{logs.length === 0 ? (
-					<div className="empty-hint">이번 주 메모가 아직 없습니다.</div>
-				) : (
-					<ul className="quick-log-list">
-						{logs.map((l) => (
-							<li key={l.id}>
-								<span>{l.text}</span>
-								{l.w_hour != null && <span className="quick-log-hour">{l.w_hour}h</span>}
-								<button type="button" className="remove-btn" onClick={() => handleDeleteLog(l.id)}>삭제 ✕</button>
-							</li>
-						))}
-					</ul>
-				)}
-			</div>
 		</div>
 	);
 }
