@@ -12,17 +12,13 @@ const STATUS_BUTTONS = [
 	{ key: '휴가', emoji: '🏖' }
 ];
 
-export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
+export default function Dashboard({ onSessionOut, onGoEdit }) {
 	const [data, setData] = useState(undefined);
 	const [draft, setDraft] = useState(null);
 	const [msg, setMsg] = useState('');
 
 	const [logs, setLogs] = useState([]);
-	const [selectedIds, setSelectedIds] = useState(() => new Set());
 	const [newText, setNewText] = useState('');
-	const [settings, setSettings] = useState(undefined);
-	const [aiBusy, setAiBusy] = useState(false);
-	const [aiMsg, setAiMsg] = useState('');
 
 	const [agentMsg, setAgentMsg] = useState('');
 	const [selectedStatus, setSelectedStatus] = useState(null);
@@ -72,13 +68,6 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 	useEffect(() => {
 		if (!data || !data.dt_seq) return;
 		loadLogs(data.dt_seq);
-		api.getSettings().then((res) => {
-			if (res.__sessionout) {
-				onSessionOut();
-				return;
-			}
-			setSettings(res);
-		});
 		api.getReport(data.dt_seq).then((res) => {
 			if (res.__sessionout) {
 				onSessionOut();
@@ -203,72 +192,7 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 			onSessionOut();
 			return;
 		}
-		setSelectedIds((prev) => {
-			const next = new Set(prev);
-			next.delete(id);
-			return next;
-		});
 		loadLogs(data.dt_seq);
-	};
-
-	const handleToggleSelect = (id) => {
-		setSelectedIds((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
-			return next;
-		});
-	};
-
-	const handleAutoDraft = async () => {
-		if (!data || !data.dt_seq) return;
-		const res = await api.getAutoDraft(data.dt_seq);
-		if (res.__sessionout) {
-			onSessionOut();
-			return;
-		}
-		setDraft(res);
-	};
-
-	const handleGenerateAi = async () => {
-		if (selectedIds.size === 0) {
-			alert('AI로 만들 메모를 1건 이상 선택해주세요.');
-			return;
-		}
-		setAiBusy(true);
-		setAiMsg('');
-		try {
-			const res = await api.getAiDraft(data.dt_seq, Array.from(selectedIds), '');
-			if (res.__sessionout) {
-				onSessionOut();
-				return;
-			}
-			if (res.result === 'ai_disabled') {
-				setAiMsg(res.message || 'AI를 사용할 수 없습니다.');
-				return;
-			}
-			if (res.result === 'no_memo') {
-				setAiMsg('선택한 메모가 없습니다.');
-				return;
-			}
-			if (res.result === 'daily_limit_exceeded') {
-				setAiMsg(res.message || '오늘 AI 초안 생성 횟수를 다 썼습니다.');
-				return;
-			}
-			if (res.result === 'ai_schema_broken') {
-				setAiMsg(res.message || 'AI 응답 형식 오류로 초안을 만들지 못했습니다.');
-				return;
-			}
-			if (res.ai_fallback) {
-				setAiMsg('AI 호출에 실패해 직전 주 계획 기반 규칙 초안으로 대체했습니다.');
-			}
-			setDraft(res);
-			setSelectedIds(new Set());
-		} catch (err) {
-			setAiMsg('AI 초안 생성 중 오류가 발생했습니다. (' + err.message + ')');
-		} finally {
-			setAiBusy(false);
-		}
 	};
 
 	if (data === undefined) {
@@ -282,8 +206,6 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 	if (!data.dt_seq) {
 		return <div className="empty-hint">{data.message || '등록된 주차 정보가 없습니다.'}</div>;
 	}
-
-	const aiConsented = settings && settings.ai_consent_yn === 'Y';
 
 	return (
 		<div className="dashboard">
@@ -371,10 +293,6 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 				</div>
 			</div>
 
-			{data.auto_draft_ready && (
-				<div className="msg">자동 초안이 준비되어 있습니다. 내용을 확인해보세요.</div>
-			)}
-
 			<div className="dash-action-banner">
 				{data.state === 'EMPTY' && (
 					<>
@@ -383,7 +301,6 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 							{data.prev_similar && (
 								<button type="button" onClick={handleCopyPrev}>전주 복사</button>
 							)}
-							<button type="button" onClick={handleAutoDraft}>자동 초안</button>
 							<button type="button" onClick={() => onGoEdit(data.dt_seq)}>직접 작성</button>
 						</div>
 					</>
@@ -435,28 +352,12 @@ export default function Dashboard({ onSessionOut, onGoEdit, onGoSettings }) {
 					<ul className="quick-log-list">
 						{logs.map((l) => (
 							<li key={l.id}>
-								<label>
-									<input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => handleToggleSelect(l.id)} />
-									<span>{l.text}</span>
-									{l.w_hour != null && <span className="quick-log-hour">{l.w_hour}h</span>}
-								</label>
+								<span>{l.text}</span>
+								{l.w_hour != null && <span className="quick-log-hour">{l.w_hour}h</span>}
 								<button type="button" className="remove-btn" onClick={() => handleDeleteLog(l.id)}>삭제 ✕</button>
 							</li>
 						))}
 					</ul>
-				)}
-
-				<div className="quick-log-footer">
-					<button type="button" onClick={handleGenerateAi} disabled={aiBusy || !aiConsented}>
-						{aiBusy ? 'AI로 만드는 중...' : 'AI로 보고서 만들기'}
-					</button>
-				</div>
-				{aiMsg && <div className="msg">{aiMsg}</div>}
-				{!aiConsented && (
-					<div className="empty-hint">
-						AI 사용 동의를 켜야 AI로 보고서를 만들 수 있습니다.{' '}
-						{onGoSettings && <a href="#" onClick={(e) => { e.preventDefault(); onGoSettings(); }}>설정에서 켜기</a>}
-					</div>
 				)}
 			</div>
 		</div>

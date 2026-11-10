@@ -80,30 +80,12 @@ export const api = {
 	getQuickLogs: (dtSeq) => request('/api/quick-logs' + (dtSeq ? '?dt_seq=' + dtSeq : '')),
 	addQuickLog: (text) => request('/api/quick-logs', { method: 'POST', body: JSON.stringify({ text }) }),
 	deleteQuickLog: (id) => request('/api/quick-logs/' + id, { method: 'DELETE' }),
-	getAiDraft: (dtSeq, logIds, extraText) =>
-		request('/api/ai/draft', { method: 'POST', body: JSON.stringify({ dt_seq: dtSeq, log_ids: logIds, extra_text: extraText }) }),
-
-	getSettings: () => request('/api/settings'),
-	updateAiConsent: (aiConsentYn) => request('/api/settings', { method: 'PUT', body: JSON.stringify({ ai_consent_yn: aiConsentYn }) }),
-	updateSettings: (payload) => request('/api/settings', { method: 'PUT', body: JSON.stringify(payload) }),
-
-	getAutoDraft: (dtSeq) => request('/api/auto/draft', { method: 'POST', body: JSON.stringify({ dt_seq: dtSeq }) }),
 
 	setWeeklyStatus: (dtSeq, statusButton, vacationDays) =>
 		agentRequest('/status', {
 			method: 'POST',
 			body: JSON.stringify({ dt_seq: dtSeq, status_button: statusButton, vacation_days: vacationDays || 0 })
 		}),
-	getTeam: () => request('/api/team'),
-	getTeamInbox: () => request('/api/team/inbox'),
-	pasteTeamMail: (text) => request('/api/team/paste', { method: 'POST', body: JSON.stringify({ text }) }),
-	applyTeamDraft: (memail, draftId, items, overwrite) =>
-		request('/api/team/' + encodeURIComponent(memail) + '/drafts/' + draftId + '/apply', {
-			method: 'POST',
-			body: JSON.stringify({ items, overwrite: !!overwrite })
-		}),
-	submitTeamMember: (memail) =>
-		request('/api/team/' + encodeURIComponent(memail) + '/submit', { method: 'POST' }),
 
 	getCarryover: () => agentRequest('/carryover'),
 	setCarryoverStatus: (id, status) =>

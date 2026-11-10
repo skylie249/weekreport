@@ -1,14 +1,10 @@
 import { useState } from 'react';
 
-// F2(AI)·F3(전주 복사)·F5(자동 초안)가 공통으로 쓰는 초안 미리보기.
-// 여기서는 수집한 항목과 덮어쓰기 여부만 상위로 올려주고, 실제 적용 API 호출은 호출부(Dashboard/History)가 한다.
+// 전주 복사가 쓰는 초안 미리보기.
+// 여기서는 수집한 항목과 덮어쓰기 여부만 상위로 올려주고, 실제 적용 API 호출은 호출부(Dashboard)가 한다.
 
 const SOURCE_LABELS = {
-	COPY: '전주 복사',
-	AI: 'AI 생성',
-	AUTO: '자동 초안',
-	TEAM: '팀원 메일',
-	MAIL: '메일 수집'
+	COPY: '전주 복사'
 };
 
 const LEVELS = [1, 2, 3, 4, 5];

@@ -4,21 +4,17 @@ import LoginScreen from './LoginScreen.jsx';
 import ReportScreen from './ReportScreen.jsx';
 import Dashboard from './Dashboard.jsx';
 import History from './History.jsx';
-import Settings from './Settings.jsx';
-import TeamBoard from './TeamBoard.jsx';
 
-const BASE_TABS = [
+const TABS = [
 	{ key: 'dashboard', label: '대시보드' },
 	{ key: 'history', label: '조회' },
-	{ key: 'edit', label: '작성' },
-	{ key: 'settings', label: '설정' }
+	{ key: 'edit', label: '작성' }
 ];
 
 export default function App() {
 	const [member, setMember] = useState(undefined); // undefined=로딩중, null=미인증, object=인증됨
 	const [tab, setTab] = useState('dashboard');
 	const [editDtSeq, setEditDtSeq] = useState(undefined);
-	const [hasTeam, setHasTeam] = useState(false);
 
 	const checkSession = useCallback(async () => {
 		const data = await api.getSession();
@@ -28,21 +24,6 @@ export default function App() {
 	useEffect(() => {
 		checkSession();
 	}, [checkSession]);
-
-	useEffect(() => {
-		if (!member) {
-			setHasTeam(false);
-			return;
-		}
-		// 대리 등록(F6/E2) 탭은 wr_delegate에 등록된 팀원이 1명 이상일 때만 보여준다.
-		api.getTeam().then((res) => {
-			if (!res.__sessionout) {
-				setHasTeam((res.members || []).length > 0);
-			}
-		});
-	}, [member]);
-
-	const TABS = hasTeam ? [...BASE_TABS, { key: 'team', label: '팀 대리 등록' }] : BASE_TABS;
 
 	useEffect(() => {
 		if (!member) return;
@@ -97,19 +78,13 @@ export default function App() {
 
 			<div className="app-body">
 				{tab === 'dashboard' && (
-					<Dashboard onSessionOut={() => setMember(null)} onGoEdit={goEdit} onGoSettings={() => setTab('settings')} />
+					<Dashboard onSessionOut={() => setMember(null)} onGoEdit={goEdit} />
 				)}
 				{tab === 'history' && (
 					<History onSessionOut={() => setMember(null)} onGoEdit={goEdit} />
 				)}
 				{tab === 'edit' && (
 					<ReportScreen dtSeq={editDtSeq} onSessionOut={() => setMember(null)} />
-				)}
-				{tab === 'settings' && (
-					<Settings onSessionOut={() => setMember(null)} hasTeam={hasTeam} />
-				)}
-				{tab === 'team' && hasTeam && (
-					<TeamBoard onSessionOut={() => setMember(null)} />
 				)}
 			</div>
 		</div>
