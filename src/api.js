@@ -76,6 +76,7 @@ export const api = {
 		return request('/api/report/history' + (qs.length ? '?' + qs.join('&') : ''));
 	},
 	getReportView: (dtSeq) => request('/api/report/view?dt_seq=' + dtSeq),
+	getOnelineJobs: (dtSeq) => request('/api/report/oneline-jobs?dt_seq=' + dtSeq),
 
 	addOnelineLog: (dtSeq, jobId, logType, content) =>
 		agentRequest('/oneline', {

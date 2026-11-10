@@ -31,7 +31,7 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 
 	useEffect(() => {
 		if (!data || !data.dt_seq) return;
-		api.getReport(data.dt_seq).then((res) => {
+		api.getOnelineJobs(data.dt_seq).then((res) => {
 			if (res.__sessionout) {
 				onSessionOut();
 				return;
