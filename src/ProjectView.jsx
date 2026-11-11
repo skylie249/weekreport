@@ -138,7 +138,7 @@ export default function ProjectView({ onSessionOut }) {
 			setDetail(res);
 		} catch (e) {
 			setDetail(null);
-			setErrorMsg('이 프로젝트를 볼 권한이 없습니다.');
+			setErrorMsg('내용을 불러오지 못했습니다.');
 		}
 		setLoadingDetail(false);
 	}, [onSessionOut]);
