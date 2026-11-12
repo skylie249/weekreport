@@ -90,6 +90,7 @@ export const api = {
 		}),
 
 	getTodos: (dtSeq) => agentRequest('/todos?dt_seq=' + dtSeq),
+	getTodoReportDraft: (dtSeq) => agentRequest('/todos/report-draft?dt_seq=' + dtSeq),
 	addTodo: (dtSeq, jobId, text) =>
 		agentRequest('/todos', { method: 'POST', body: JSON.stringify({ dt_seq: dtSeq, job_id: jobId, text }) }),
 	updateTodo: (id, patch) => agentRequest('/todos/' + id, { method: 'PATCH', body: JSON.stringify(patch) }),

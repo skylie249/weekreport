@@ -40,6 +40,8 @@ body {
 .week-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 13px; flex-wrap: wrap; }
 .week-bar label { color: var(--text-sub); }
 .week-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; }
+.reload-todos-btn { margin-left: auto; padding: 7px 12px; border: 1px solid var(--plan-color); background: #fff; color: var(--plan-color); border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.reload-todos-btn:hover { background: var(--plan-color); color: #fff; }
 .badge { padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 .badge.submitted { background: #e6f4ea; color: #1a7f37; }
 .badge.draft { background: #fdf3e6; color: #a66200; }

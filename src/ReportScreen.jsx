@@ -24,6 +24,34 @@ function buildGroups(reportList) {
 	return order.map((id) => map.get(id));
 }
 
+// G2: 플랫폼의 /agent/todos/report-draft 결과(job_id/plan_yn/content/w_hour/content_lvl)를
+// 현재 groups·jobList에 합친다. 이미 있는 업무는 그 칸만 덮어쓰고(다른 칸·다른 업무는 그대로),
+// 새 업무는 jobList에서 꺼내 새 카드로 추가한다.
+function applyDraftItems(groups, jobList, draftItems) {
+	const draftGroups = buildGroups(draftItems);
+	const byId = new Map(groups.map((g) => [String(g.job_id), g]));
+	const nextJobList = [...jobList];
+
+	draftGroups.forEach((d) => {
+		const key = String(d.job_id);
+		const existing = byId.get(key);
+		if (existing) {
+			byId.set(key, {
+				...existing,
+				result: d.result.content ? d.result : existing.result,
+				plan: d.plan.content ? d.plan : existing.plan
+			});
+		} else {
+			const idx = nextJobList.findIndex((j) => String(j.job_id) === key);
+			const jobName = idx >= 0 ? nextJobList[idx].job_name : d.job_id;
+			if (idx >= 0) nextJobList.splice(idx, 1);
+			byId.set(key, { job_id: d.job_id, job_name: jobName, result: d.result, plan: d.plan });
+		}
+	});
+
+	return { groups: Array.from(byId.values()), jobList: nextJobList };
+}
+
 export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 	const [weeks, setWeeks] = useState([]);
 	const [dtSeq, setDtSeq] = useState(0);
@@ -53,11 +81,46 @@ export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 		setReportSdate(data.report_sdate);
 		setReportEdate(data.report_edate);
 		setReportDate(data.report_date);
-		setJobList(data.jobList || []);
-		setGroups(buildGroups(data.reportList));
+
+		let nextJobList = data.jobList || [];
+		let nextGroups = buildGroups(data.reportList);
+
+		// G2: 저장된 내용이 아직 없는 주차는 할 일에서 자동으로 채운다(덮어쓸 기존 내용이 없으니 확인 불필요).
+		if (!data.reportList || data.reportList.length === 0) {
+			const draftRes = await api.getTodoReportDraft(data.dt_seq);
+			if (draftRes.__sessionout) {
+				onSessionOut();
+				return;
+			}
+			if (Array.isArray(draftRes) && draftRes.length > 0) {
+				const merged = applyDraftItems(nextGroups, nextJobList, draftRes);
+				nextGroups = merged.groups;
+				nextJobList = merged.jobList;
+			}
+		}
+
+		setJobList(nextJobList);
+		setGroups(nextGroups);
 		setMsg({ text: '', type: 'ok' });
 		setLoading(false);
 	}, [onSessionOut]);
+
+	const handleReloadFromTodos = async () => {
+		if (!confirm('할 일 목록에서 실적·계획 내용을 다시 불러옵니다. 내용이 있는 칸은 덮어씁니다. 계속할까요?')) return;
+		const draftRes = await api.getTodoReportDraft(dtSeq);
+		if (draftRes.__sessionout) {
+			onSessionOut();
+			return;
+		}
+		if (!Array.isArray(draftRes) || draftRes.length === 0) {
+			setMsg({ text: '불러올 할 일이 없습니다.', type: 'error' });
+			return;
+		}
+		const merged = applyDraftItems(groups, jobList, draftRes);
+		setGroups(merged.groups);
+		setJobList(merged.jobList);
+		setMsg({ text: '할 일에서 다시 불러왔습니다.', type: 'ok' });
+	};
 
 	useEffect(() => {
 		loadPage(initialDtSeq);
@@ -204,6 +267,7 @@ export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 				<span className={'badge ' + (submitYn === 'Y' ? 'submitted' : 'draft')}>
 					{submitYn === 'Y' ? '제출완료' : '미제출(작성중)'}
 				</span>
+				<button type="button" className="reload-todos-btn" onClick={handleReloadFromTodos}>할 일에서 다시 불러오기</button>
 			</div>
 
 			<div className="summary-bar">
