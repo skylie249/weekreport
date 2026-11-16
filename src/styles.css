@@ -6,21 +6,50 @@
 	--border: #e3e6ea;
 	--text-sub: #8a93a2;
 }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html, body, #root { height: 100%; }
 body {
 	font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 	background: #f2f4f7;
 	margin: 0;
 	padding: 20px;
+	padding-top: max(20px, env(safe-area-inset-top));
+	padding-bottom: max(20px, env(safe-area-inset-bottom));
+	padding-left: max(20px, env(safe-area-inset-left));
+	padding-right: max(20px, env(safe-area-inset-right));
 	color: #26282b;
+	overflow-x: hidden;
 }
 
-.center-loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-sub); }
+/* iOS Safari는 select/button에 자체 네이티브 외형(둥근 모서리·그림자)을 입혀 디자인한
+border-radius·padding이 그대로 안 먹는다 — appearance를 꺼서 모든 브라우저에서 같은 모양으로. */
+select, button, textarea, input:not([type="checkbox"]):not([type="radio"]) {
+	-webkit-appearance: none;
+	appearance: none;
+	font-family: inherit;
+}
+select {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0L5 6L10 0' fill='none' stroke='%238a93a2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 10px center;
+	background-size: 10px 6px;
+	padding-right: 28px !important;
+}
+
+/* iOS Safari는 100vh에 하단 툴바 높이를 포함하지 않아 로딩/로그인 화면 아래쪽이 가려 보인다. */
+.center-loading, .login-wrap {
+	display: flex; align-items: center; justify-content: center;
+	min-height: 100vh;
+	min-height: 100dvh;
+	color: var(--text-sub);
+}
+@supports (-webkit-touch-callout: none) {
+	.center-loading, .login-wrap { min-height: -webkit-fill-available; }
+}
 
 /* ---- 로그인 화면 ---- */
-.login-wrap { display: flex; align-items: center; justify-content: center; height: 100vh; }
-.login-box { background: #fff; padding: 36px 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 320px; }
+.login-box { background: #fff; padding: 36px 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 320px; max-width: calc(100vw - 40px); }
 .login-box h1 { font-size: 18px; margin: 0 0 20px; }
 .login-box input { width: 100%; box-sizing: border-box; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 4px; }
 .login-box button { width: 100%; padding: 10px; background: #2e6ddf; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
@@ -29,7 +58,7 @@ body {
 .login-msg { color: #d33; font-size: 13px; margin-bottom: 10px; min-height: 16px; }
 
 /* ---- 주간보고 화면 ---- */
-.wrap { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px 90px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.wrap { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px calc(90px + env(safe-area-inset-bottom)); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 
 .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
 .top h1 { font-size: 18px; margin: 0; font-weight: 700; }
@@ -39,7 +68,7 @@ body {
 
 .week-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 13px; flex-wrap: wrap; }
 .week-bar label { color: var(--text-sub); }
-.week-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; }
+.week-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background-color: #fff; }
 .badge { padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 .badge.submitted { background: #e6f4ea; color: #1a7f37; }
 .badge.draft { background: #fdf3e6; color: #a66200; }
@@ -88,18 +117,20 @@ body {
 
 .add-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; background: #f7f8fa; border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
 .add-bar label { font-size: 13px; color: var(--text-sub); }
-.add-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; min-width: 220px; background: #fff; }
+.add-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; min-width: 220px; background-color: #fff; }
 .add-bar button { padding: 8px 14px; border: 1px solid var(--plan-color); background: #fff; color: var(--plan-color); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
 .add-bar button:hover { background: var(--plan-color); color: #fff; }
 
-.buttons { display: flex; gap: 10px; justify-content: flex-end; position: sticky; bottom: 0; background: #fff; padding-top: 10px; }
+.buttons { display: flex; gap: 10px; justify-content: flex-end; position: -webkit-sticky; position: sticky; bottom: 0; background: #fff; padding-top: 10px; padding-bottom: env(safe-area-inset-bottom); flex-wrap: wrap; }
 .buttons button { padding: 11px 22px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; }
 .btn-save { background: #eee; color: #333; }
 .btn-save:hover { background: #e2e2e2; }
 .btn-submit { background: #2e6ddf; color: #fff; }
 .btn-submit:hover { background: #2559bd; }
 
-@media (max-width: 680px) {
+/* 가로로 눕힌 휴대폰(폭은 좁아도 680px를 넘는 경우가 많음)은 그대로 좌우 배치를 유지하고,
+세로 화면이거나 아주 좁은 화면(560px 이하, 가로여도)만 위아래로 쌓는다. */
+@media (max-width: 560px), (max-width: 680px) and (orientation: portrait) {
 	.job-body { grid-template-columns: 1fr; }
 	.copy-col { flex-direction: row; border: none; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
 }
@@ -113,7 +144,8 @@ body {
 .app-tab { padding: 8px 16px; border: none; background: none; border-radius: 6px; font-size: 14px; font-weight: 600; color: var(--text-sub); cursor: pointer; }
 .app-tab:hover { background: #f2f4f7; }
 .app-tab.active { background: var(--plan-color); color: #fff; }
-.app-nav-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-sub); }
+.app-nav-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-sub); flex-wrap: wrap; min-width: 0; }
+.app-nav-user span { min-width: 0; overflow-wrap: break-word; }
 .app-nav-user a { color: #888; text-decoration: none; }
 .app-nav-user a:hover { text-decoration: underline; }
 .app-body { }
@@ -135,12 +167,15 @@ body {
 .dash-missing li button { padding: 6px 12px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; font-size: 12px; }
 .dash-missing li button:hover { background: #f2f4f7; }
 
-@media (max-width: 680px) {
+@media (max-width: 560px), (max-width: 680px) and (orientation: portrait) {
 	.dash-cards { grid-template-columns: 1fr; }
+}
+@media (min-width: 561px) and (max-width: 900px) and (orientation: landscape) {
+	.dash-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 }
 
 /* ---- 초안 미리보기(전주 복사) ---- */
-.draft-preview { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px 90px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.draft-preview { max-width: 1040px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px calc(90px + env(safe-area-inset-bottom)); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 .draft-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .source-badge { background: var(--plan-bg); color: var(--plan-color); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 10px; }
 .draft-week { font-size: 14px; font-weight: 700; }
@@ -170,15 +205,18 @@ body {
 .history-dot.dot-plan { background: var(--plan-color); }
 .history-item-job { font-weight: 700; min-width: 120px; }
 .history-item-label { color: var(--text-sub); min-width: 32px; }
-.history-item-content { flex: 1; }
+.history-item-content { flex: 1; min-width: 0; overflow-wrap: break-word; }
 .history-item-hour { color: var(--text-sub); }
+
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+.table-scroll .history-table { margin-bottom: 0; min-width: 480px; }
 
 /* ---- 프로젝트별 보기(H1·H2) ---- */
 .project-view { max-width: 1120px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 .pv-top { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 16px; }
 .pv-top-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .pv-top-row label { color: var(--text-sub); flex-shrink: 0; }
-.pv-top-row select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff; max-width: 320px; }
+.pv-top-row select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background-color: #fff; max-width: 320px; }
 .pv-project-filter { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; width: 140px; }
 .pv-week-nav { border: 1px solid var(--border); background: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 12px; color: #555; }
 .pv-week-nav:hover:not(:disabled) { background: #eef4ff; color: var(--plan-color); border-color: #b7c7ea; }
@@ -209,13 +247,33 @@ body {
 .pv-person-pos { color: var(--text-sub); font-size: 12px; }
 .pv-person-hour { color: var(--text-sub); margin-left: auto; font-size: 12px; }
 .pv-person-draft { background: #fdf3e6; color: #a66200; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
-.pv-person-content { white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
+.pv-person-content { white-space: pre-wrap; overflow-wrap: break-word; font-size: 13px; line-height: 1.5; }
 .empty-hint-inline { color: var(--text-sub); font-size: 13px; }
 
 @media (max-width: 680px) {
 	.project-view { padding: 18px 16px; }
+}
+@media (max-width: 560px), (max-width: 680px) and (orientation: portrait) {
 	.pv-mobile-tabs { display: flex; }
 	.pv-columns { grid-template-columns: 1fr; }
 	.pv-column { display: none; }
 	.pv-column.mobile-active { display: block; }
+}
+
+/* 모바일 폭에서는 입력 요소 글자 크기를 16px 이상으로 — iOS Safari는 16px 미만 input/select/
+textarea에 포커스가 가면 화면을 자동으로 확대해서 레이아웃이 깨진 것처럼 보인다. */
+@media (max-width: 680px) {
+	input, select, textarea { font-size: 16px; }
+	.side-meta input[type=number] { width: 60px; }
+	.pv-top-row { flex-wrap: wrap; }
+	.pv-project-filter { width: auto; flex: 1; min-width: 100px; }
+	.add-bar select { flex: 1; min-width: 0; }
+}
+
+@media (max-width: 480px) {
+	body { padding: 12px; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+	.wrap, .draft-preview { padding: 18px 16px calc(90px + env(safe-area-inset-bottom)); }
+	.dashboard, .history, .project-view { padding: 18px 16px; }
+	.login-box { padding: 28px 24px; }
+	.top { flex-wrap: wrap; gap: 8px; }
 }

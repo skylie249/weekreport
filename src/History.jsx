@@ -62,39 +62,41 @@ export default function History({ onSessionOut, onGoEdit }) {
 
 	return (
 		<div className="history">
-			<table className="history-table">
-				<thead>
-					<tr>
-						<th>기간</th>
-						<th>상태</th>
-						<th>업무 수</th>
-						<th>실적 시간</th>
-					</tr>
-				</thead>
-				<tbody>
-					{weeks.map((w) => (
-						<tr
-							key={w.dt_seq}
-							className={selectedDtSeq === w.dt_seq ? 'selected' : ''}
-							onClick={() => handleSelect(w.dt_seq)}
-						>
-							<td>{w.report_sdate} ~ {w.report_edate}</td>
-							<td>
-								<span className={'badge ' + (w.submit_yn === 'Y' ? 'submitted' : 'draft')}>
-									{w.submit_yn === 'Y' ? '제출완료' : '미제출'}
-								</span>
-							</td>
-							<td>{w.job_count}</td>
-							<td>{w.result_hours}</td>
-						</tr>
-					))}
-					{weeks.length === 0 && (
+			<div className="table-scroll">
+				<table className="history-table">
+					<thead>
 						<tr>
-							<td colSpan={4} className="empty-hint">조회할 주차가 없습니다.</td>
+							<th>기간</th>
+							<th>상태</th>
+							<th>업무 수</th>
+							<th>실적 시간</th>
 						</tr>
-					)}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{weeks.map((w) => (
+							<tr
+								key={w.dt_seq}
+								className={selectedDtSeq === w.dt_seq ? 'selected' : ''}
+								onClick={() => handleSelect(w.dt_seq)}
+							>
+								<td>{w.report_sdate} ~ {w.report_edate}</td>
+								<td>
+									<span className={'badge ' + (w.submit_yn === 'Y' ? 'submitted' : 'draft')}>
+										{w.submit_yn === 'Y' ? '제출완료' : '미제출'}
+									</span>
+								</td>
+								<td>{w.job_count}</td>
+								<td>{w.result_hours}</td>
+							</tr>
+						))}
+						{weeks.length === 0 && (
+							<tr>
+								<td colSpan={4} className="empty-hint">조회할 주차가 없습니다.</td>
+							</tr>
+						)}
+					</tbody>
+				</table>
+			</div>
 
 			{detail && (
 				<div className="history-detail">
