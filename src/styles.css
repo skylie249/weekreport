@@ -157,6 +157,7 @@ select {
 .dash-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: #fafbfc; }
 .dash-card-label { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
 .dash-card-value { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.dash-card-sub { font-size: 12px; font-weight: 400; color: var(--text-sub); }
 .dash-action-banner { display: flex; justify-content: space-between; align-items: center; background: #eef4ff; border: 1px solid #b7c7ea; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; font-size: 14px; font-weight: 600; color: #26282b; }
 .dash-action-buttons { display: flex; gap: 8px; }
 .dash-action-buttons button { padding: 8px 16px; border: 1px solid var(--plan-color); background: #fff; color: var(--plan-color); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }

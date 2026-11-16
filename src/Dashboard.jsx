@@ -68,6 +68,10 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 		return <div className="empty-hint">{data.message || '등록된 주차 정보가 없습니다.'}</div>;
 	}
 
+	const standardHours = Number(data.standard_hours) || 0;
+	const resultHoursNum = Number(data.result_hours) || 0;
+	const shortHours = Math.max(0, Math.round((standardHours - resultHoursNum) * 10) / 10);
+
 	return (
 		<div className="dashboard">
 			{msg && <div className="msg">{msg}</div>}
@@ -82,7 +86,7 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 				</div>
 				<div className="dash-card">
 					<div className="dash-card-label">실적 시간 합계</div>
-					<div className="dash-card-value">{data.result_hours}시간</div>
+					<div className="dash-card-value">{data.result_hours}시간 <span className="dash-card-sub">/ 기준 {standardHours}시간</span></div>
 				</div>
 				<div className="dash-card">
 					<div className="dash-card-label">미제출 지난 주차</div>
@@ -111,7 +115,11 @@ export default function Dashboard({ onSessionOut, onGoEdit }) {
 					</>
 				)}
 				{data.state === 'SUBMITTED' && (
-					<span>제출 완료되었습니다.</span>
+					shortHours > 0 ? (
+						<span>제출 완료되었지만, 이번 주 등록 가능한 시간 중 <b>{shortHours}시간</b>이 부족합니다.</span>
+					) : (
+						<span>제출 완료되었습니다.</span>
+					)
 				)}
 			</div>
 
