@@ -6,12 +6,18 @@ function emptySide() {
 	return { content: '', w_hour: '', content_lvl: '3' };
 }
 
-function buildGroups(reportList) {
+function buildGroups(reportList, opinionsByJob) {
 	const map = new Map();
 	const order = [];
 	(reportList || []).forEach((r) => {
 		if (!map.has(r.job_id)) {
-			map.set(r.job_id, { job_id: r.job_id, job_name: r.job_name, result: emptySide(), plan: emptySide() });
+			map.set(r.job_id, {
+				job_id: r.job_id,
+				job_name: r.job_name,
+				result: emptySide(),
+				plan: emptySide(),
+				opinion: (opinionsByJob && opinionsByJob.get(r.job_id)) || { id: null, text: '' }
+			});
 			order.push(r.job_id);
 		}
 		const side = r.plan_yn === 'Y' ? 'plan' : 'result';
@@ -22,6 +28,20 @@ function buildGroups(reportList) {
 		};
 	});
 	return order.map((id) => map.get(id));
+}
+
+// 의견 조회가 실패해도(에이전트 비활성 등) 보고서 본문 로딩은 막지 않는다 — 빈 의견으로
+// 채우고 조용히 넘어간다. 쓰기(저장) 실패는 반대로 반드시 화면에 보여준다(JobCard 참고).
+async function loadOpinionsByJob(dtSeq) {
+	try {
+		const res = await api.getOpinions(dtSeq);
+		if (res.__sessionout || res.result === 'agent_disabled' || !Array.isArray(res)) {
+			return new Map();
+		}
+		return new Map(res.map((o) => [o.job_id, { id: o.id, text: o.text }]));
+	} catch {
+		return new Map();
+	}
 }
 
 export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
@@ -54,8 +74,9 @@ export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 		setReportEdate(data.report_edate);
 		setReportDate(data.report_date);
 
+		const opinionsByJob = await loadOpinionsByJob(data.dt_seq);
 		setJobList(data.jobList || []);
-		setGroups(buildGroups(data.reportList));
+		setGroups(buildGroups(data.reportList, opinionsByJob));
 		setMsg({ text: '', type: 'ok' });
 		setLoading(false);
 	}, [onSessionOut]);
@@ -102,7 +123,10 @@ export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 		if (!newJobId) { alert('업무를 선택하세요.'); return; }
 		const job = jobList.find((j) => String(j.job_id) === String(newJobId));
 		if (!job) return;
-		setGroups((prev) => [...prev, { job_id: job.job_id, job_name: job.job_name, result: emptySide(), plan: emptySide() }]);
+		setGroups((prev) => [
+			...prev,
+			{ job_id: job.job_id, job_name: job.job_name, result: emptySide(), plan: emptySide(), opinion: { id: null, text: '' } }
+		]);
 		setJobList((prev) => prev.filter((j) => String(j.job_id) !== String(newJobId)));
 		setNewJobId('');
 	};
@@ -218,7 +242,15 @@ export default function ReportScreen({ dtSeq: initialDtSeq, onSessionOut }) {
 
 			<div id="cardsContainer">
 				{groups.map((g) => (
-					<JobCard key={g.job_id} group={g} onFieldChange={handleFieldChange} onCopy={handleCopy} onRemove={handleRemove} />
+					<JobCard
+						key={g.job_id}
+						group={g}
+						dtSeq={dtSeq}
+						onFieldChange={handleFieldChange}
+						onCopy={handleCopy}
+						onRemove={handleRemove}
+						onSessionOut={onSessionOut}
+					/>
 				))}
 			</div>
 			{groups.length === 0 && (

@@ -109,6 +109,16 @@ select {
 .side-meta input[type=number] { width: 56px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; }
 .side-meta select { padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; }
 
+.job-opinion { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--border); background: #fafbfc; }
+.job-opinion .side-label { font-size: 12px; font-weight: 700; color: #666; }
+.job-opinion textarea { width: 100%; box-sizing: border-box; min-height: 48px; font-size: 13px; font-family: inherit; padding: 8px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; background: #fff; }
+.job-opinion textarea:focus { outline: 2px solid rgba(46,109,223,0.25); border-color: #b7c7ea; }
+.job-opinion-bar { display: flex; align-items: center; gap: 10px; }
+.job-opinion-bar button { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+.job-opinion-bar button:hover { background: #eef4ff; border-color: #b7c7ea; }
+.job-opinion-bar button:disabled { opacity: 0.6; cursor: default; }
+.job-opinion-bar .msg { margin-bottom: 0; min-height: auto; font-size: 12px; }
+
 .copy-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border-left: 1px dashed var(--border); border-right: 1px dashed var(--border); padding: 6px 2px; background: #fdfdfd; }
 .copy-col button { border: 1px solid var(--border); background: #fff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px; line-height: 1; color: #555; }
 .copy-col button:hover { background: #eef4ff; color: var(--plan-color); border-color: #b7c7ea; }

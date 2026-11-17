@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { api } from './api.js';
+
 const LEVELS = [1, 2, 3, 4, 5];
 
 // TODO: 사내 기준 확인 - 레벨별 의미가 정해지면 아래 값을 채워넣는다.
@@ -49,7 +52,70 @@ function Side({ side, label, data, onChange }) {
 	);
 }
 
-export default function JobCard({ group, onFieldChange, onCopy, onRemove }) {
+// 팀장에게 보낼 의견은 메인 보고서 저장(doSave/doSubmit)과 별개 백엔드(wr-agent-platform)에
+// 즉시 저장한다 — "평소대로" 버튼처럼 메인 저장과 실패 영역을 분리해둔 것과 같은 결.
+// 쓰기 실패를 조용히 삼키면 바로 전날(2026-11-16) 할 일 기능이 겪은 것과 같은 "눌러도 반응
+// 없음" 문제가 되므로, catch에서 반드시 눈에 보이는 에러 메시지를 띄운다.
+function OpinionSection({ group, dtSeq, onSessionOut }) {
+	const initial = group.opinion || { id: null, text: '' };
+	const [id, setId] = useState(initial.id);
+	const [text, setText] = useState(initial.text);
+	const [saving, setSaving] = useState(false);
+	const [msg, setMsg] = useState({ text: '', type: 'ok' });
+
+	useEffect(() => {
+		setId(initial.id);
+		setText(initial.text);
+		setMsg({ text: '', type: 'ok' });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [dtSeq, group.job_id, initial.id, initial.text]);
+
+	const handleSave = async () => {
+		setSaving(true);
+		setMsg({ text: '', type: 'ok' });
+		try {
+			const trimmed = text.trim();
+			if (!trimmed) {
+				if (id) {
+					const res = await api.deleteOpinion(id);
+					if (res.__sessionout) { onSessionOut(); return; }
+					if (res.result === 'agent_disabled') { setMsg({ text: res.message || '에이전트 기능을 사용할 수 없습니다.', type: 'error' }); return; }
+					setId(null);
+					setMsg({ text: '삭제되었습니다.', type: 'ok' });
+				}
+				return;
+			}
+			const res = await api.saveOpinion(dtSeq, group.job_id, trimmed);
+			if (res.__sessionout) { onSessionOut(); return; }
+			if (res.result === 'agent_disabled') { setMsg({ text: res.message || '에이전트 기능을 사용할 수 없습니다.', type: 'error' }); return; }
+			setId(res.id);
+			setMsg({ text: '저장되었습니다.', type: 'ok' });
+		} catch (err) {
+			setMsg({ text: '저장에 실패했습니다. 잠시 후 다시 시도해주세요. (' + err.message + ')', type: 'error' });
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	return (
+		<div className="job-opinion">
+			<span className="side-label">팀장님께 보낼 의견 (선택)</span>
+			<textarea
+				placeholder="이 프로젝트에 대해 팀장님께 직접 전달하고 싶은 의견이 있으면 적어주세요"
+				value={text}
+				onChange={(e) => setText(e.target.value)}
+			/>
+			<div className="job-opinion-bar">
+				<button type="button" disabled={saving} onClick={handleSave}>
+					{saving ? '저장 중…' : '의견 저장'}
+				</button>
+				<span className={'msg' + (msg.type === 'error' ? ' error' : '')}>{msg.text}</span>
+			</div>
+		</div>
+	);
+}
+
+export default function JobCard({ group, dtSeq, onFieldChange, onCopy, onRemove, onSessionOut }) {
 	return (
 		<div className="job-card">
 			<div className="job-head">
@@ -81,6 +147,7 @@ export default function JobCard({ group, onFieldChange, onCopy, onRemove }) {
 					onChange={(field, value) => onFieldChange(group.job_id, 'plan', field, value)}
 				/>
 			</div>
+			<OpinionSection group={group} dtSeq={dtSeq} onSessionOut={onSessionOut} />
 		</div>
 	);
 }
