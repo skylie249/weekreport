@@ -10,7 +10,7 @@ async function request(path, options = {}) {
 		return { __sessionout: true };
 	}
 	if (!res.ok) {
-		throw new Error('HTTP ' + res.status);
+		throw new Error('HTTP ' + res.status + ' ' + (await res.text().catch(() => '')));
 	}
 	return res.json();
 }
@@ -23,7 +23,7 @@ async function agentToken() {
 		return { __sessionout: true };
 	}
 	if (!res.ok) {
-		throw new Error('HTTP ' + res.status);
+		throw new Error('HTTP ' + res.status + ' ' + (await res.text().catch(() => '')));
 	}
 	return res.json();
 }
@@ -50,7 +50,7 @@ async function agentRequest(path, options = {}) {
 		return { __sessionout: true };
 	}
 	if (!res.ok) {
-		throw new Error('HTTP ' + res.status);
+		throw new Error('HTTP ' + res.status + ' ' + (await res.text().catch(() => '')));
 	}
 	return res.json();
 }
